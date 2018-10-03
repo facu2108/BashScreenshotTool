@@ -9,22 +9,25 @@
 #notes           :Firefox needs to be installed
 #==============================================================================
 
-#environments
-ENV_1="DEVELOPMENT" #NO SPACES
-ENV_2="QUALITY"		#NO SPACES
-ENV_3="PRODUCTION"	#NO SPACES
-ENV_1_URL="http://www.DEVELOPMENT.com/"
-ENV_2_URL="http://www.DEVELOPMENT.com/"
-ENV_3_URL="http://www.DEVELOPMENT.com/"
+#========= Environments =============
+ENV_1="PROD" #NO SPACES
+ENV_2="QA"		#NO SPACES
+ENV_3="LOCAL"	#NO SPACES
+ENV_1_URL="https://gfdgdfgfdg.net/"
+ENV_2_URL="https://gfdgdgdfgfdgd.com/"
+ENV_3_URL="http://fdgdfgdfgdfg.sc/"
 
-URL_FILE="urls-short.txt"
-LOG_FILE="$(date +%Y%m%d%H%M)_log.txt"
+#========= Settings =============
+BROWSER="chromium"
+S_WIDTH="1280"
+S_HEIGHT="11000"
+GET_TAGS=0  #1 to get the code
+GET_HTML=0	#1 to get the code
+URL_FILE="short_list_links.txt"
+LOG_FILE="screenshots/$(date +%Y%m%d%H%M)_log.txt"
+folder_base="screenshots"
 
-#echo "$(date "+%m%d%Y %T") : Starting work" >> $LOG_FILE 2>&1
-
-
-#other variables
-folder_base=screenshots
+#========= System Constants =============
 RED='\033[0;31m'
 NC='\033[0m'
 GREEN='\033[1;32m'
@@ -34,15 +37,6 @@ CYAN='\033[1;36m'
 ORANGE='\033[1;33m'
 PURPLE='\033[0;35m'
 BLUE='\033[1;34m'
-
-#Firefox parameters // DOES NOT WORK 
-#--window-size=1366,768
-MO="--window-size=1366,768"
-TA="--window-size=1366,768"
-DE="--window-size=1366,768"
-TV="--window-size=1366,768"
-
-#compare -verbose -metric RMSE -subimage-search global-diversity-and-inclusion-QA.png global-diversity-and-inclusion-XP.png glo-df.png
 
 #count of files to process
 NUMOFLINES=$(wc -l < "$URL_FILE")
@@ -138,24 +132,43 @@ while read p; do
     INPUT=$p
 	PROC_COUNT=$((PROC_COUNT+1))
 
-file_name=$(echo $INPUT| cut -d'/' -f 2,3 | tr '/' _)
-
-#echo "$string" | tr xyz _
+file_name=$(echo $INPUT| cut -d'/' -f 2,3,4,5,6 | tr '/' _)
 
 get_screenshot ()
 {
 	ENV_URL=$1
 	ENV=$2
 	FOL=$3
-	PAGE=$4
+	PAGE=${4%$'\r'}
 	FILE="$3/$5-$ENV.png"
 	
 	echo -e "For ${BLUE} $ENV ${NC}..."
 	SECONDS=0 
-	firefox -screenshot $FILE $ENV_URL$PAGE
+	
+	case $BROWSER in 
+	"chromium")
+		chromium --headless --disable-gpu --screenshot=$FILE --hide-scrollbars $ENV_URL$PAGE --window-size=$S_WIDTH,$S_HEIGHT
+		;;
+	"firefox")
+		firefox -screenshot $FILE $ENV_URL$PAGE
+		;;
+	esac
+	
 	echo -e "Done ${GREEN} $FILE${NC} ($SECONDS seconds)" 
 	echo "$(date "+%m%d%Y %T") : Screenshot Created: $FILE" >> $LOG_FILE 2>&1
+	echo $ENV_URL$PAGE
+	
+	if [$GET_TAGS = 1]
+	then
+		echo "curl -k $ENV_URL$PAGE -o $3/$5-$ENV-code.txt"
+		curl -k $ENV_URL$PAGE -o $3/$5-$ENV-code.txt
+		cat $3/$5-$ENV-code.txt | grep -o "<[^>]*>"  > $3/$5-$ENV-tags.txt
+		#curl $ENV_URL$PAGE >> $3/$5-$ENV-code.txt
+		sed -i -e "s_.*_$PAGE|&_" $3/$5-$ENV-tags.txt
+		cat $3/$5-$ENV-tags.txt >> $3/all-tags.txt
+	fi
 }
+
 
 echo "$(date "+%m%d%Y %T") : Parsing $p - $file_name" >> $LOG_FILE 2>&1
     
