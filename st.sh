@@ -1,29 +1,30 @@
 #!/bin/bash
 #==============================================================================
 #title           :st.sh
-#description     :This script will take screenshots from multiple environments to compare images
+#description     :This script will take screenshots from multiple environments to compare images and code
 #author          :Facundo M. (facundo.nah (at) gmail.com)
 #date            :20170628
 #version         :0.2
 ##usage          :bash st.sh
-#notes           :Firefox needs to be installed
+#notes           :Firefox needs to be installed - curl needs to be installed - chromiun needs to be installed - beyond compare is recommended to compare the screenshots 
 #==============================================================================
 
 #========= Environments =============
-ENV_1="PROD" #NO SPACES
-ENV_2="QA"		#NO SPACES
-ENV_3="LOCAL"	#NO SPACES
-ENV_1_URL="https://gfdgdfgfdg.net/"
-ENV_2_URL="https://gfdgdgdfgfdgd.com/"
-ENV_3_URL="http://fdgdfgdfgdfg.sc/"
+ENV_1="AAA" 	#NO SPACES
+ENV_2="BBB"	#NO SPACES
+ENV_3="CCC"	#NO SPACES
+ENV_1_URL="https://dsdsdsdsdss.net/"
+ENV_2_URL="https://dsdsdss.com/"
+ENV_3_URL="https://17fdfdfd.net/"
 
 #========= Settings =============
 BROWSER="chromium"
 S_WIDTH="1280"
 S_HEIGHT="11000"
 GET_TAGS=0  #1 to get the code
-GET_HTML=0	#1 to get the code
-URL_FILE="short_list_links.txt"
+GET_HTML=1	#1 to get the code
+FOR_BEYOND_COMPARE=1 #to split screenshots in folders and facilitate comparison using beyond compare
+URL_FILE="links.txt"
 LOG_FILE="screenshots/$(date +%Y%m%d%H%M)_log.txt"
 folder_base="screenshots"
 
@@ -37,6 +38,7 @@ CYAN='\033[1;36m'
 ORANGE='\033[1;33m'
 PURPLE='\033[0;35m'
 BLUE='\033[1;34m'
+
 
 #count of files to process
 NUMOFLINES=$(wc -l < "$URL_FILE")
@@ -118,7 +120,16 @@ echo
 echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 echo "Creating Folder"
 foldername=$(date +%Y%m%d%H%M)
-mkdir -p  "$folder_base/$foldername"
+
+if [[ $FOR_BEYOND_COMPARE == 1 ]]
+then
+	mkdir -p  "$folder_base/$foldername/$ENV_1"
+	mkdir -p  "$folder_base/$foldername/$ENV_2"
+	mkdir -p  "$folder_base/$foldername/$ENV_3"
+else
+	mkdir -p  "$folder_base/$foldername"
+fi
+
 folder="$folder_base/$foldername"
 echo "Folder created: $folder"
 echo "$(date "+%m%d%Y %T") : Folder Created: $folder" >> $LOG_FILE 2>&1
@@ -134,13 +145,25 @@ while read p; do
 
 file_name=$(echo $INPUT| cut -d'/' -f 2,3,4,5,6 | tr '/' _)
 
+#echo "$string" | tr xyz _
+
 get_screenshot ()
 {
+#chromium --headless --disable-gpu --screenshot=file2.png --hide-scrollbars https://www.google.com --window-size=1280,768
+#firefox -screenshot $FILE $ENV_URL$PAGE
+
 	ENV_URL=$1
 	ENV=$2
 	FOL=$3
 	PAGE=${4%$'\r'}
-	FILE="$3/$5-$ENV.png"
+	
+	if [[ $FOR_BEYOND_COMPARE == 1 ]]
+	then
+		FILE="$3/$ENV/$5.png"
+	else
+		FILE="$3/$5-$ENV.png"
+	fi
+	
 	
 	echo -e "For ${BLUE} $ENV ${NC}..."
 	SECONDS=0 
@@ -158,7 +181,14 @@ get_screenshot ()
 	echo "$(date "+%m%d%Y %T") : Screenshot Created: $FILE" >> $LOG_FILE 2>&1
 	echo $ENV_URL$PAGE
 	
-	if [$GET_TAGS = 1]
+	if [[ $GET_HTML == 1 ]]
+	then
+		echo "curl -k $ENV_URL$PAGE -o $3/$5-$ENV-HTMLcode.txt"
+		curl -k $ENV_URL$PAGE -o $3/$5-$ENV-HTMLcode.txt
+		cp $3/$5-$ENV-HTMLcode.txt $3/$ENV/$5-HTMLcode.txt
+	fi
+
+	if [[ $GET_TAGS == 1 ]]
 	then
 		echo "curl -k $ENV_URL$PAGE -o $3/$5-$ENV-code.txt"
 		curl -k $ENV_URL$PAGE -o $3/$5-$ENV-code.txt
