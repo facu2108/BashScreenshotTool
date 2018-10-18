@@ -22,10 +22,12 @@ BROWSER="chromium"
 S_WIDTH="1280"
 S_HEIGHT="11000"
 GET_TAGS=0  #1 to get the code
-GET_HTML=1	#1 to get the code
-FOR_BEYOND_COMPARE=1 #to split screenshots in folders and facilitate comparison using beyond compare
-URL_FILE="links.txt"
-LOG_FILE="screenshots/$(date +%Y%m%d%H%M)_log.txt"
+GET_HTML=0	#1 to get the code
+VALIDATE_SITES=0 	#1 to validate the site if open
+FOR_BEYOND_COMPARE=1 #to split screenshots in folders and facilitate comparison
+UNIFY_LOG=1 #all runs into a single file
+URL_FILE="pages.txt"
+
 folder_base="screenshots"
 
 #========= System Constants =============
@@ -43,6 +45,13 @@ BLUE='\033[1;34m'
 #count of files to process
 NUMOFLINES=$(wc -l < "$URL_FILE")
 PROC_COUNT=0
+
+if [[ $UNIFY_LOG == 1 ]]
+then
+	LOG_FILE="screenshots/ScreenshotTool_log.txt"
+else
+	LOG_FILE="screenshots/$(date +%Y%m%d%H%M)_log.txt"
+fi
 
 
 clear
@@ -99,15 +108,17 @@ validate_status ()
 	echo "$(date "+%m%d%Y %T") : Sites Checked " >> $LOG_FILE 2>&1
 }
 
-
-echo "Checking Sites..."
-
-echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-validate_status $ENV_1_URL $ENV_1
-validate_status $ENV_2_URL $ENV_2
-validate_status $ENV_3_URL $ENV_3
-echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-
+if [[ $VALIDATE_SITES == 1 ]]
+	then
+		echo "Checking Sites..."
+		echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+		validate_status $ENV_1_URL $ENV_1
+		validate_status $ENV_2_URL $ENV_2
+		validate_status $ENV_3_URL $ENV_3
+		echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+	fi
+	
+	
 read -p "Do you want to check $ENV_1? [Y/n]" -n 1 -r check_ENV_1
 echo
 read -p "Do you want to check $ENV_2? [Y/n]" -n 1 -r check_ENV_2
@@ -126,13 +137,15 @@ then
 	mkdir -p  "$folder_base/$foldername/$ENV_1"
 	mkdir -p  "$folder_base/$foldername/$ENV_2"
 	mkdir -p  "$folder_base/$foldername/$ENV_3"
+	echo "Folders created: $folder_base/$foldername/$ENV_1, $ENV_2, $ENV_3"
+	echo "$(date "+%m%d%Y %T") : Folders created $folder_base/$foldername/$ENV_1, $ENV_2, $ENV_3 -  " >> $LOG_FILE 2>&1
 else
 	mkdir -p  "$folder_base/$foldername"
+	echo "Folder created: $folder"
+	echo "$(date "+%m%d%Y %T") : Folder Created: $folder" >> $LOG_FILE 2>&1
 fi
 
 folder="$folder_base/$foldername"
-echo "Folder created: $folder"
-echo "$(date "+%m%d%Y %T") : Folder Created: $folder" >> $LOG_FILE 2>&1
 
 #Page Processing 
 echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
@@ -143,7 +156,8 @@ while read p; do
     INPUT=$p
 	PROC_COUNT=$((PROC_COUNT+1))
 
-file_name=$(echo $INPUT| cut -d'/' -f 2,3,4,5,6 | tr '/' _)
+file_name=$(echo $INPUT| cut -d'/' -f 2,3,4,5,6 | tr '/' _ | tr -cd '[[:alnum:]]._-')
+
 
 #echo "$string" | tr xyz _
 
@@ -160,10 +174,11 @@ get_screenshot ()
 	if [[ $FOR_BEYOND_COMPARE == 1 ]]
 	then
 		FILE="$3/$ENV/$5.png"
+		echo "$(date "+%m%d%Y %T") : File Name Set for Beyond Compare: $FILE" >> $LOG_FILE 2>&1
 	else
 		FILE="$3/$5-$ENV.png"
+		echo "$(date "+%m%d%Y %T") : File Name Set: $FILE" >> $LOG_FILE 2>&1
 	fi
-	
 	
 	echo -e "For ${BLUE} $ENV ${NC}..."
 	SECONDS=0 
@@ -178,7 +193,7 @@ get_screenshot ()
 	esac
 	
 	echo -e "Done ${GREEN} $FILE${NC} ($SECONDS seconds)" 
-	echo "$(date "+%m%d%Y %T") : Screenshot Created: $FILE" >> $LOG_FILE 2>&1
+	echo "$(date "+%m%d%Y %T") : Screenshot Created using $BROWSER: $FILE" >> $LOG_FILE 2>&1
 	echo $ENV_URL$PAGE
 	
 	if [[ $GET_HTML == 1 ]]
@@ -186,6 +201,7 @@ get_screenshot ()
 		echo "curl -k $ENV_URL$PAGE -o $3/$5-$ENV-HTMLcode.txt"
 		curl -k $ENV_URL$PAGE -o $3/$5-$ENV-HTMLcode.txt
 		cp $3/$5-$ENV-HTMLcode.txt $3/$ENV/$5-HTMLcode.txt
+		echo "$(date "+%m%d%Y %T") : GET HMLT Code: $3/$5-$ENV-HTMLcode.txt" >> $LOG_FILE 2>&1
 	fi
 
 	if [[ $GET_TAGS == 1 ]]
@@ -233,4 +249,10 @@ echo -e "+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 ls $folder -lh
 
 
+#sudo snap install --classic notepadqq
+#sudo apt-get install curl
+#wget https://www.scootersoftware.com/bcompare-4.2.6.23150_amd64.deb
+#sudo apt-get update
+#sudo apt-get install gdebi-core
+#sudo gdebi bcompare-4.2.6.23150_amd64.deb
 
