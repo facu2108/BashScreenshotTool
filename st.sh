@@ -1,7 +1,7 @@
 #!/bin/bash
 #==============================================================================
 #title           :st.sh
-#description     :This script will take screenshots from multiple environments to compare images and code
+#description     :This script will take screenshots from multiple environments to compare images
 #author          :Facundo M. (facundo.nah (at) gmail.com)
 #date            :20170628
 #version         :0.2
@@ -10,12 +10,12 @@
 #==============================================================================
 
 #========= Environments =============
-ENV_1="AAA" 	#NO SPACES
-ENV_2="BBB"	#NO SPACES
-ENV_3="CCC"	#NO SPACES
-ENV_1_URL="https://dsdsdsdsdss.net/"
-ENV_2_URL="https://dsdsdss.com/"
-ENV_3_URL="https://17fdfdfd.net/"
+ENV_1="AAA" #NO SPACES
+ENV_2="bbb"		#NO SPACES
+ENV_3="ccc"	#NO SPACES
+ENV_1_URL="https://fdfdfd.net/"
+ENV_2_URL="https://fdfdfdfd.com/"
+ENV_3_URL="https://fdfdfd.net/"
 
 #========= Settings =============
 BROWSER="chromium"
@@ -26,7 +26,7 @@ GET_HTML=0	#1 to get the code
 VALIDATE_SITES=0 	#1 to validate the site if open
 FOR_BEYOND_COMPARE=1 #to split screenshots in folders and facilitate comparison
 UNIFY_LOG=1 #all runs into a single file
-URL_FILE="pages.txt"
+URL_FILE="content_links.txt"
 
 folder_base="screenshots"
 
@@ -40,132 +40,14 @@ CYAN='\033[1;36m'
 ORANGE='\033[1;33m'
 PURPLE='\033[0;35m'
 BLUE='\033[1;34m'
+COUNT=0
+PAGE_COUNT=0
+PAGE_FROM=0
+PAGE_TO=0
 
-
-#count of files to process
-NUMOFLINES=$(wc -l < "$URL_FILE")
-PROC_COUNT=0
-
-if [[ $UNIFY_LOG == 1 ]]
-then
-	LOG_FILE="screenshots/ScreenshotTool_log.txt"
-else
-	LOG_FILE="screenshots/$(date +%Y%m%d%H%M)_log.txt"
-fi
-
-
-clear
-
-echo -e "${YELLOW}  _____       _____            _                                      _       	${NC}"
-echo -e "${YELLOW} |___ /      | ____|_ ____   _(_)_ __ ___  _ __  _ __ ___   ___ _ __ | |_ ___ 	${NC}"
-echo -e "${YELLOW}   |_ \ _____|  _| | '_ \ \ / / | '__/ _ \| '_ \| '_ \` _ \ / _ \ '_ \| __/ __|	${NC}"
-echo -e "${YELLOW}  ___) |_____| |___| | | \ V /| | | | (_) | | | | | | | | |  __/ | | | |_\__ \ ${NC}"
-echo -e "${YELLOW} |____/      |_____|_| |_|\_/ |_|_|  \___/|_| |_|_| |_| |_|\___|_| |_|\__|___/	${NC}"
-echo -e "${YELLOW}                                                                              	${NC}"
-echo -e "${YELLOW}  ____                               _           _     _____           _ 		${NC}"
-echo -e "${YELLOW} / ___|  ___ _ __ ___  ___ _ __  ___| |__   ___ | |_  |_   _|__   ___ | |		${NC}"
-echo -e "${YELLOW} \___ \ / __| '__/ _ \/ _ \ '_ \/ __| '_ \ / _ \| __|   | |/ _ \ / _ \| |		${NC}"
-echo -e "${YELLOW}  ___) | (__| | |  __/  __/ | | \__ \ | | | (_) | |_    | | (_) | (_) | |		${NC}"
-echo -e "${YELLOW} |____/ \___|_|  \___|\___|_| |_|___/_| |_|\___/ \__|   |_|\___/ \___/|_|		${NC}"
-echo -e "${YELLOW} 	 																			${NC}"
-echo -e "${RED} Developed by Facundo M. - Jun 2018                                      			${NC}"
-echo
-
-echo "$(date "+%m%d%Y %T") : Starting Program" >> $LOG_FILE 2>&1
-
-read -n 1 -s -r -p "Press any key to continue"
-echo
-
-echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-
-echo -e "List of Pages to Check ($URL_FILE):"
-while read p; do
-    #echo $ENV_2_URL$p
-      INPUT=$p
-    file_name=$(echo $INPUT| cut -d'/' -f 2,3)
-    echo -e "#- ${YELLOW}$file_name${NC}"
-done < $URL_FILE
-echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-
-
-echo "Killing Firefox..."
-pkill -f firefox
-#echo "Firefox Killed"
-echo "$(date "+%m%d%Y %T") : Firefox Killed" >> $LOG_FILE 2>&1
-#Checking site status
-
-validate_status ()
-{
-	ENV_URL=$1
-	ENV=$2
-	
-	ENV_URL_STATUS=$(curl -Is $ENV_URL | head -1)
-	if [[ $ENV_URL_STATUS = *"200"* ]]; then
-     	 echo -e "$ENV Environment is ${GREEN}OK${NC} - $ENV_URL"
-	  else
-		  echo -e "$ENV Environment is ${RED}LOCKED${NC} - $ENV_URL"
-	fi
-	echo "$(date "+%m%d%Y %T") : Sites Checked " >> $LOG_FILE 2>&1
-}
-
-if [[ $VALIDATE_SITES == 1 ]]
-	then
-		echo "Checking Sites..."
-		echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-		validate_status $ENV_1_URL $ENV_1
-		validate_status $ENV_2_URL $ENV_2
-		validate_status $ENV_3_URL $ENV_3
-		echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-	fi
-	
-	
-read -p "Do you want to check $ENV_1? [Y/n]" -n 1 -r check_ENV_1
-echo
-read -p "Do you want to check $ENV_2? [Y/n]" -n 1 -r check_ENV_2
-echo
-read -p "Do you want to check $ENV_3? [Y/n]" -n 1 -r check_ENV_3
-echo
-
-
-#create folder for screenshots
-echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-echo "Creating Folder"
-foldername=$(date +%Y%m%d%H%M)
-
-if [[ $FOR_BEYOND_COMPARE == 1 ]]
-then
-	mkdir -p  "$folder_base/$foldername/$ENV_1"
-	mkdir -p  "$folder_base/$foldername/$ENV_2"
-	mkdir -p  "$folder_base/$foldername/$ENV_3"
-	echo "Folders created: $folder_base/$foldername/$ENV_1, $ENV_2, $ENV_3"
-	echo "$(date "+%m%d%Y %T") : Folders created $folder_base/$foldername/$ENV_1, $ENV_2, $ENV_3 -  " >> $LOG_FILE 2>&1
-else
-	mkdir -p  "$folder_base/$foldername"
-	echo "Folder created: $folder"
-	echo "$(date "+%m%d%Y %T") : Folder Created: $folder" >> $LOG_FILE 2>&1
-fi
-
-folder="$folder_base/$foldername"
-
-#Page Processing 
-echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
-#echo "Procesing pages..."
-
-while read p; do
-    #echo $ENV_2_URL$p
-    INPUT=$p
-	PROC_COUNT=$((PROC_COUNT+1))
-
-file_name=$(echo $INPUT| cut -d'/' -f 2,3,4,5,6 | tr '/' _ | tr -cd '[[:alnum:]]._-')
-
-
-#echo "$string" | tr xyz _
-
+#========= Functions =============
 get_screenshot ()
 {
-#chromium --headless --disable-gpu --screenshot=file2.png --hide-scrollbars https://www.google.com --window-size=1280,768
-#firefox -screenshot $FILE $ENV_URL$PAGE
-
 	ENV_URL=$1
 	ENV=$2
 	FOL=$3
@@ -215,26 +97,181 @@ get_screenshot ()
 	fi
 }
 
+validate_status ()
+{
+	ENV_URL=$1
+	ENV=$2
+	
+	ENV_URL_STATUS=$(curl -Is $ENV_URL | head -1)
+	if [[ $ENV_URL_STATUS = *"200"* ]]; then
+     	 echo -e "$ENV Environment is ${GREEN}OK${NC} - $ENV_URL"
+	  else
+		  echo -e "$ENV Environment is ${RED}LOCKED${NC} - $ENV_URL"
+	fi
+	echo "$(date "+%m%d%Y %T") : Sites Checked " >> $LOG_FILE 2>&1
+}
 
-echo "$(date "+%m%d%Y %T") : Parsing $p - $file_name" >> $LOG_FILE 2>&1
-    
-    echo -e "-----------Processing${YELLOW} $file_name${NC} [$PROC_COUNT of $NUMOFLINES]-----------"
-    if [[ $check_ENV_1 =~ ^[Yy]$ ]]
-    then
-		get_screenshot "$ENV_1_URL" "$ENV_1" "$folder" "$p" "$file_name"
-    fi
-    
-    if [[ $check_ENV_2 =~ ^[Yy]$ ]]
-    then
-		get_screenshot "$ENV_2_URL" "$ENV_2" "$folder" "$p" "$file_name"
-    fi
-    
-    if [[ $check_ENV_3 =~ ^[Yy]$ ]]
-    then
-		get_screenshot "$ENV_3_URL" "$ENV_3" "$folder" "$p" "$file_name"
-    fi
+
+
+#count of files to process
+NUMOFLINES=$(wc -l < "$URL_FILE")
+PROC_COUNT=0
+
+if [[ $UNIFY_LOG == 1 ]]
+then
+	LOG_FILE="screenshots/ScreenshotTool_log.txt"
+else
+	LOG_FILE="screenshots/$(date +%Y%m%d%H%M)_log.txt"
+fi
+
+
+clear
+
+echo -e "${YELLOW}  _____       _____            _                                      _       	${NC}"
+echo -e "${YELLOW} |___ /      | ____|_ ____   _(_)_ __ ___  _ __  _ __ ___   ___ _ __ | |_ ___ 	${NC}"
+echo -e "${YELLOW}   |_ \ _____|  _| | '_ \ \ / / | '__/ _ \| '_ \| '_ \` _ \ / _ \ '_ \| __/ __|	${NC}"
+echo -e "${YELLOW}  ___) |_____| |___| | | \ V /| | | | (_) | | | | | | | | |  __/ | | | |_\__ \ ${NC}"
+echo -e "${YELLOW} |____/      |_____|_| |_|\_/ |_|_|  \___/|_| |_|_| |_| |_|\___|_| |_|\__|___/	${NC}"
+echo -e "${YELLOW}                                                                              	${NC}"
+echo -e "${YELLOW}  ____                               _           _     _____           _ 		${NC}"
+echo -e "${YELLOW} / ___|  ___ _ __ ___  ___ _ __  ___| |__   ___ | |_  |_   _|__   ___ | |		${NC}"
+echo -e "${YELLOW} \___ \ / __| '__/ _ \/ _ \ '_ \/ __| '_ \ / _ \| __|   | |/ _ \ / _ \| |		${NC}"
+echo -e "${YELLOW}  ___) | (__| | |  __/  __/ | | \__ \ | | | (_) | |_    | | (_) | (_) | |		${NC}"
+echo -e "${YELLOW} |____/ \___|_|  \___|\___|_| |_|___/_| |_|\___/ \__|   |_|\___/ \___/|_|		${NC}"
+echo -e "${YELLOW} 	 																			${NC}"
+echo -e "${RED} Developed by Facundo M. - Jun 2018                                      			${NC}"
+echo
+
+echo "$(date "+%m%d%Y %T") : Starting Program" >> $LOG_FILE 2>&1
+
+read -n 1 -s -r -p "Press any key to continue"
+echo
+
+echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+echo -e "List of Pages to Check ($URL_FILE):"
+while read p; do
+    #echo $ENV_2_URL$p
+      INPUT=$p
+    file_name=$(echo $INPUT| cut -d'/' -f 2,3)
+	let COUNT=$COUNT+1
+    echo -e "$COUNT - ${YELLOW}$file_name${NC}"
+done < $URL_FILE
+echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+
+
+echo "Killing Firefox..."
+pkill -f firefox
+#echo "Firefox Killed"
+echo "$(date "+%m%d%Y %T") : Firefox Killed" >> $LOG_FILE 2>&1
+#Checking site status
+
+if [[ $VALIDATE_SITES == 1 ]]
+	then
+		echo "Checking Sites..."
+		echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+		validate_status $ENV_1_URL $ENV_1
+		validate_status $ENV_2_URL $ENV_2
+		validate_status $ENV_3_URL $ENV_3
+		echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+	fi
+
+echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+read -p 'From Line Number:  ' PAGE_FROM
+read -p 'To Line Number:  ' PAGE_TO
+echo "$(date "+%m%d%Y %T") : From page $PAGE_FROM to $PAGE_TO " >> $LOG_FILE 2>&1
+echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+	
+read -p "Do you want to check $ENV_1? [Y/n]" -n 1 -r check_ENV_1
+echo
+read -p "Do you want to check $ENV_2? [Y/n]" -n 1 -r check_ENV_2
+echo
+read -p "Do you want to check $ENV_3? [Y/n]" -n 1 -r check_ENV_3
+echo
+
+
+#create folder for screenshots
+echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+echo "Creating Folder"
+foldername=$(date +%Y%m%d%H%M)
+force_folder_name="none"
+
+echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+read -p 'Force Folder Name (empty for datetime):  ' force_folder_name 
+echo "$(date "+%m%d%Y %T") : Force folder name to: $force_folder_name " >> $LOG_FILE 2>&1
+echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+
+if [[ $force_folder_name == "none" ]]
+then
+	mkdir -p  "$folder_base/$foldername"
+	echo "Folder created: $folder"
+	echo "$(date "+%m%d%Y %T") : Folder Created: $folder" >> $LOG_FILE 2>&1
+else
+	let foldername=$force_folder_name
+	echo "$(date "+%m%d%Y %T") : Force folder name to: $force_folder_name " >> $LOG_FILE 2>&1
+	mkdir -p  "$folder_base/$foldername"
+	echo "$(date "+%m%d%Y %T") : Folders created $folder_base/$foldername/$ENV_1, $ENV_2, $ENV_3 -  " >> $LOG_FILE 2>&1
+fi
+
+
+
+if [[ $FOR_BEYOND_COMPARE == 1 ]]
+then
+	mkdir -p  "$folder_base/$foldername/$ENV_1"
+	mkdir -p  "$folder_base/$foldername/$ENV_2"
+	mkdir -p  "$folder_base/$foldername/$ENV_3"
+	echo "Folders created: $folder_base/$foldername/$ENV_1, $ENV_2, $ENV_3"
+	echo "$(date "+%m%d%Y %T") : Folders created $folder_base/$foldername/$ENV_1, $ENV_2, $ENV_3 -  " >> $LOG_FILE 2>&1
+else
+	mkdir -p  "$folder_base/$foldername"
+	echo "Folder created: $folder"
+	echo "$(date "+%m%d%Y %T") : Folder Created: $folder" >> $LOG_FILE 2>&1
+fi
+
+folder="$folder_base/$foldername"
+
+#Page Processing 
+echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
+#echo "Procesing pages..."
+
+while read p; do
+    #echo $ENV_2_URL$p
+    INPUT=$p
+	PROC_COUNT=$((PROC_COUNT+1))
+
+	file_name=$(echo $INPUT| cut -d'/' -f 2,3,4,5,6 | tr '/' _ | tr -cd '[[:alnum:]]._-')
+
+	echo "$(date "+%m%d%Y %T") : Parsing $p - $file_name" >> $LOG_FILE 2>&1
+
+	if [[ $PROC_COUNT -ge $PAGE_FROM  &&  $PROC_COUNT -le $PAGE_TO ]]
+	then
+		echo "$(date "+%m%d%Y %T") : Processing Page as per : $PROC_COUNT [$PAGE_FROM of $PAGE_TO]" >> $LOG_FILE 2>&1
+		echo "Processing Page as per: $PROC_COUNT [$PAGE_FROM of $PAGE_TO] - $p"
+
+
+		echo -e "-----------Processing${YELLOW} $file_name${NC} [$PROC_COUNT of $NUMOFLINES]-----------"
+		if [[ $check_ENV_1 =~ ^[Yy]$ ]]
+		then
+			get_screenshot "$ENV_1_URL" "$ENV_1" "$folder" "$p" "$file_name"
+		fi
+
+		if [[ $check_ENV_2 =~ ^[Yy]$ ]]
+		then
+			get_screenshot "$ENV_2_URL" "$ENV_2" "$folder" "$p" "$file_name"
+		fi
+
+		if [[ $check_ENV_3 =~ ^[Yy]$ ]]
+		then
+			get_screenshot "$ENV_3_URL" "$ENV_3" "$folder" "$p" "$file_name"
+		fi
+		
+	else
+		echo "$(date "+%m%d%Y %T") : Skipping Page as per : $PROC_COUNT [$PAGE_FROM of $PAGE_TO]" >> $LOG_FILE 2>&1
+		echo "Skipping Page as per: $PROC_COUNT [$PAGE_FROM of $PAGE_TO] - $p"
+	fi
     
 done < $URL_FILE
+
+
 echo -e "++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++"
 echo "$(date "+%m%d%Y %T") : All Pages Procesed" >> $LOG_FILE 2>&1
 
